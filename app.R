@@ -325,49 +325,55 @@ server <- function(input, output) {
         if (is.null(input$value.res))
             return()
             
-        buttons <- list(mdif = textInput(inputId = "m.dif",
+        buttons <- list(textInput(inputId = "m.dif",
                       label = "Mean difference:",
-                      value = "10.0"),
-            standev = textInput(inputId = "sd",
+                      value = 10.0),
+            textInput(inputId = "sd",
                       label = "Stand dev:",
-                      value = "2.0"),
-            ssize = textInput(inputId = "N",
+                      value = 2.0),
+            textInput(inputId = "N",
                       label = "Sample size (per group):",
-                      value = "4"),
-            confid = sliderInput(inputId = "confidence",
-                      label = paste("Confidence: 1- ", "\u03B1"),
-                      min = 50, max = 99, value = 95, width = '300px', post = "%"),
-            powerres = sliderInput(inputId = "power",
-                      label = paste("Power: 1- ", "\u03B2"),
-                      min = 0, max = 100, value = 80, width = '300px', post = "%"))
+                      value = 4),
+            sliderInput(inputId = "confidence",
+                      label = paste("Alpha ", "\u03B1"),
+                      min = 0.01, max = 0.1, value = 0.05, width = '300px', post = "%"),
+            sliderInput(inputId = "power",
+                      label = paste("Power: ", "\u03B2"),
+                      min = 0, max = 1, value = 0.8, width = '300px', post = "%"))
         
         switch(input$value.res,
-                
+        
             "Mean difference" = buttons[-1],
             "Standard deviation" = buttons[-2],
             "Sample size" = buttons[-3],
             "Significance level" = buttons[-4],
             "Power" = buttons[-5]
-               
-               )
         
+               )
+            
     })
+
     
     output$power <- renderTable({
         
-        params <- list(input$N, input$m.dif, input$sd, input$confidence, input$power)
+        params <- list(N = as.numeric(input$N),
+                       mdif = as.numeric(input$m.dif), 
+                       std = as.numeric(input$sd), 
+                       conf = as.numeric(input$confidence), 
+                       pwr = as.numeric(input$power),
+                       hypot = input$Hypot)
         
-        params[which(!sapply(params, is.null))] <- as.numeric(params[which(!sapply(params, is.null))])
+        params[which(c("Sample size", "Mean difference", "Standard deviation", "Significance level", "Power")==input$value.res)] <- NULL
         
-        analysis <- power.t.test(n = params[[1]], delta = params[[2]], sd = params[[3]],
-                     sig.level = c(100-params[[4]])/100, power = params[[5]]/100,
-                     alternative = input$Hypot)
+        analysis <- power.t.test(n = params$N, delta = params$mdif, sd = params$std,
+                     sig.level = params$conf, power = params$pwr,
+                     alternative = params$hypot)
         
-        analysis.tab <- data.frame(c("n", "delta", "sd","sig.level", "power"),
-                                   c(analysis$n, analysis$delta, analysis$sd, analysis$sig.level, analysis$power))
+        analysis.tab <- data.frame("Stat" = c("n", "delta", "sd","sig.level", "power"),
+                                   "Estimation" = c(analysis$n, analysis$delta, analysis$sd, analysis$sig.level, analysis$power))
         
         analysis.tab
-        
+           
     })
     
 }
