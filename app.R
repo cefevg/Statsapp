@@ -22,9 +22,16 @@ ui <- navbarPage("Statsapp",
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
-            fileInput('uploadfile', 'Choose xlsx file',
+            fileInput('uploadfile', 'Choose .xlsx file',
                       accept = c(".xlsx")
-            )
+            ),
+            checkboxGroupInput('variables', label = h3("Variables"),
+                               choices = list("Plate" = "Plate",
+                                              "Molecule" = "Molecule",
+                                              "Dosage" = "Dosage",
+                                              "Row"= "Row",
+                                              "Column" = "Column"),
+                               selected = 1)
         ),
         
         # Show a plot of the generated distribution
@@ -32,7 +39,9 @@ ui <- navbarPage("Statsapp",
             plotOutput("heatPlot"),
             plotOutput("rawvis"),
             textOutput("outliers"),
-            tableOutput("descriptive")
+            tableOutput("descriptive"),
+            hr(),
+            tableOutput("grouping")
         )
     )
 ),
@@ -268,6 +277,18 @@ server <- function(input, output) {
             theme(axis.title.x = element_blank(), axis.title.y = element_blank()) +
             facet_wrap(~Plate, ncol = 1, dir = "v")
     })
+    
+    output$grouping <- renderTable({ 
+        
+        values <- alldat()
+        
+        descript <- values %>%
+            group_by_at(vars(input$variables)) %>%
+            summarise(med = median(Value), mean = mean(Value),
+                      sd = sd(Value), mad = mad(Value), 
+                      number = n())
+        
+        descript})
     
     output$rawvis <- renderPlot({
         
