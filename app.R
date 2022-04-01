@@ -1,30 +1,49 @@
 #
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
+# Statsapp is a Shiny web application developed by Ceferino Varon Gonzalez
+# for a preliminary statistical analysis of the lab data.
+# 
 #
-# Find out more about building applications with Shiny here:
+# Please contact Ceferino for any comment or suggestion you might have:
 #
-#    http://shiny.rstudio.com/
+#    ceferino.varongonzalez@bayer.com
 #
+
+# This Shiny app uses the following libraries:
 
 library(shiny)
 library(readxl)
 library(tidyverse)
 
-# Define UI for application that draws a histogram
+# The UI decomposes the analyses in different tabs,
+# each one related to one type of analysis (descriptive, predictive,
+# inference & design of experiments) and all using the dataset imported
+# in the Descriptive tab,
+# plus a number of Do It Yourself analyses for any other dataset imported
+
+# App name
+
 ui <- navbarPage("Statsapp",
-                 
+     
+                 # Descriptive stats tab title
+                             
                  tabPanel("Descriptive",
     
-    # Application title
+    # Descriptive stats title in the tab
+    
     titlePanel("Validation and descriptive statistics"),
     
-    # Sidebar with a slider input for number of bins 
+    # Sidebar
     sidebarLayout(
         sidebarPanel(
+            
+            # Data upload
+            
             fileInput('uploadfile', 'Choose .xlsx file',
                       accept = c(".xlsx")
             ),
+            
+            # Variables selection
+            
             checkboxGroupInput('variables', label = h3("Variables"),
                                choices = list("Plate" = "Plate",
                                               "Molecule" = "Molecule",
@@ -34,32 +53,60 @@ ui <- navbarPage("Statsapp",
                                selected = 1)
         ),
         
-        # Show a plot of the generated distribution
+        # Main panel
         mainPanel(
+            
+            # Heat map on the plates
+            
+            hr(),
             plotOutput("heatPlot"),
+            
+            # Histogram-density plot on the plates
+            
+            hr(),
             plotOutput("rawvis"),
+            
+            # Outlier detection
+            
+            hr(),
             textOutput("outliers"),
+            
+            # Table describing the data
+            
+            hr(),
             tableOutput("descriptive"),
+            
+            # Summary table with selected variables
+            
             hr(),
             tableOutput("grouping")
         )
     )
 ),
+            
+            # Predictive stats tab title
 
             tabPanel("Predictive",
                      
-        # Application title
+        # Predictive stats title in the tab
+        
         titlePanel("Correlations and ED50"),
                      
-        # Sidebar with a slider input for number of bins 
+        # Sidebar selecting the type of plot to run
+        # NOT DOING ANYTHING TODAY: WORK IN PROGRESS
+        # In the future, selecting the type of prediction to run
+        
         sidebarLayout(
         sidebarPanel(
+            
+            # Prediction options
+            
         radioButtons("plotType", "Plot type",
                     c("Scatter"="p", "Line"="l")
               )
         ),
                          
-        # Show a plot of the generated distribution
+        # Show a plot of the generated prediction
         mainPanel(
         plotOutput("corPlot")
        )
@@ -68,12 +115,14 @@ ui <- navbarPage("Statsapp",
                      
 ),
 
+        # Inference stats tab title
+
         tabPanel("Inference",
          
-         # Application title
+         # Tab title
          titlePanel("Hypothesis testing"),
          
-         # Sidebar with a slider input for number of bins 
+         # Sidebar with a radio button for variable selection 
          sidebarLayout(
              sidebarPanel(
                  radioButtons("var", "Variable",
@@ -82,7 +131,7 @@ ui <- navbarPage("Statsapp",
                  )
              ),
              
-             # Show a plot of the generated distribution
+             # Show a boxplot for the selected variable
              mainPanel(
              plotOutput("inference")    
              )
@@ -91,12 +140,16 @@ ui <- navbarPage("Statsapp",
          
 ),
 
+        # DoE stats tab title
+
         tabPanel("DoE",
          
-         # Application title
+         # Experimental design tab
          titlePanel("Experimental design"),
          
-         # Sidebar with a slider input for number of bins 
+         # Sidebar selecting the type of plot to run
+         # NOT DOING ANYTHING TODAY: WORK IN PROGRESS
+         
          sidebarLayout(
              sidebarPanel(
                  radioButtons("plotType", "Plot type",
@@ -104,7 +157,7 @@ ui <- navbarPage("Statsapp",
                  )
              ),
              
-             # Show a plot of the generated distribution
+             # Empty panel today
              mainPanel(
                  
              )
@@ -113,14 +166,19 @@ ui <- navbarPage("Statsapp",
          
 ),
 
+        # New set of tabs where a particular dataset can be imported
+        # for 'do it yourself' analyses
+        
         navbarMenu("DIY",
+                   
+                   # Visualisation tab name
                    
                    tabPanel("Visualisation",
                             
-                            # Application title
+                            # Within-tab title
                             titlePanel("Visualisation"),
                             
-                            # Sidebar with a slider input for number of bins 
+                            # Sidebar with a radio-type of button to select vis 
                             sidebarLayout(
                                 sidebarPanel(
                                     radioButtons("plotType", "Plot type",
@@ -132,7 +190,7 @@ ui <- navbarPage("Statsapp",
                                     
                                 ),
                                 
-                                # Show a plot of the generated distribution
+                                # Empty panel today
                                 mainPanel(
                                     
                                 )
@@ -141,12 +199,16 @@ ui <- navbarPage("Statsapp",
                             
                    ),
          
+                   # Inference tab name
+                   
                    tabPanel("Hypothesis testing",
                             
-                            # Application title
+                            # Within-tab title
                             titlePanel("Test of Hypothesis"),
                             
-                            # Sidebar with a slider input for number of bins 
+                            # Sidebar with a radio-type of button to select vis
+                            # doing nothing today
+                            
                             sidebarLayout(
                                 sidebarPanel(
                                     radioButtons("plotType", "Plot type",
@@ -154,7 +216,7 @@ ui <- navbarPage("Statsapp",
                                     )
                                 ),
                                 
-                                # Show a plot of the generated distribution
+                                # Empty panel today
                                 mainPanel(
                                     
                                 )
@@ -163,12 +225,17 @@ ui <- navbarPage("Statsapp",
                             
                    ),
                    
+                   # Power analysis tab name
+                   
                    tabPanel("Power analysis",
                             
-                            # Application title
+                            # Within-tab title
+                            
                             titlePanel("Power analysis"),
                             
-                            # Sidebar with a slider input for number of bins 
+                            # Sidebar with the options to be chosen
+                            # for the power analysis
+                            
                             sidebarLayout(
                                 sidebarPanel(
                                     radioButtons("datatype", "Type of data",
@@ -187,7 +254,7 @@ ui <- navbarPage("Statsapp",
                                 
                                 ),
                                 
-                                # Show a plot of the generated distribution
+                                # Returns all values
                                 mainPanel(
                                 tableOutput("power")    
                                 )
@@ -199,8 +266,10 @@ ui <- navbarPage("Statsapp",
 
 )
 
-# Define server logic required to draw a histogram
+# Define server logic required to run all estimates
 server <- function(input, output) {
+    
+    # Function reading and returning the imported file
     
     alldat <- reactive({
         
@@ -212,6 +281,10 @@ server <- function(input, output) {
         dat
         
     })
+    
+    
+    # Function estimating the potential outliers
+    # STILL IN PROGRES
     
     output$outliers <- renderText({
         
@@ -237,6 +310,9 @@ server <- function(input, output) {
         #}
         
     })
+    
+    # Function estimating the effect sizes
+    # WORK IN PROGRESS
     
     output$esize <- renderTable({
         
@@ -267,16 +343,20 @@ server <- function(input, output) {
         
     })
     
+    # Heatmap reflecting the plate variability
+    
     output$heatPlot <- renderPlot({
         
         x    <- alldat()
         
-        # draw the histogram with the specified number of bins
         ggplot(x, aes(y= reorder(Row, desc(Row)), x=as.factor(Column), fill = Value))+
             geom_raster() +
             theme(axis.title.x = element_blank(), axis.title.y = element_blank()) +
             facet_wrap(~Plate, ncol = 1, dir = "v")
     })
+    
+    # Summary table according to the selected variables
+    # In descriptive stats
     
     output$grouping <- renderTable({ 
         
@@ -290,17 +370,20 @@ server <- function(input, output) {
         
         descript})
     
+    # Histogram/density plot for controls among plates
+    
     output$rawvis <- renderPlot({
         
         x    <- alldat()
         
-        # draw the histogram with the specified number of bins
         ggplot(x[x$Molecule=="DMSO",], aes(x= Value, col = as.factor(Plate)))+
             geom_histogram(aes(y=..density.., fill = as.factor(Plate)), alpha = 0.5, position = "identity")+
             geom_density() + 
             theme_bw()
         
     })
+    
+    # Summary table for all data
     
     output$descriptive <- renderTable({
         
@@ -315,11 +398,12 @@ server <- function(input, output) {
         
         })
     
+    # Scatter plot with inference representation
+    
     output$corPlot <- renderPlot({
         
         x    <- alldat()
         
-        # draw the histogram with the specified number of bins
         ggplot(x, aes(x= log(Dosage), y = Value, col = as.factor(Plate)))+
             geom_point()+
             geom_smooth() +
@@ -327,19 +411,21 @@ server <- function(input, output) {
         
     })
     
-    
+    # Boxplot for selected variable
     
     output$inference <- renderPlot({
         
         x    <- alldat()
         
-        # draw the histogram with the specified number of bins
         ggplot(x, aes_string(x= sprintf("factor(%s)", input$var), y = "Value"))+
             geom_boxplot() +
             geom_point(position = position_jitter(width = 0.0001)) +
             theme_bw()
         
     })
+    
+    
+    # Interactive panel for the power analysis
     
     output$ui2 <- renderUI({
         
@@ -374,6 +460,8 @@ server <- function(input, output) {
             
     })
 
+    
+    # Results for the power analysis
     
     output$power <- renderTable({
         
