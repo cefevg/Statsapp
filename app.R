@@ -99,11 +99,9 @@ ui <- navbarPage("Statsapp",
         sidebarLayout(
         sidebarPanel(
             
-            # Prediction options
+        # Molecule choice
             
-        radioButtons("plotType", "Plot type",
-                    c("Scatter"="p", "Line"="l")
-              )
+        uiOutput("ui_pred")
         ),
                          
         # Show a plot of the generated prediction
@@ -404,7 +402,7 @@ server <- function(input, output) {
         
         x    <- alldat()
         
-        ggplot(x, aes(x= log(Dosage), y = Value, col = as.factor(Plate)))+
+        ggplot(x[x$Molecule ==input$Molecule,], aes(x= log(Dosage), y = Value, col = as.factor(Plate)))+
             geom_point()+
             geom_smooth() +
             theme_bw()
@@ -421,6 +419,18 @@ server <- function(input, output) {
             geom_boxplot() +
             geom_point(position = position_jitter(width = 0.0001)) +
             theme_bw()
+        
+    })
+    
+    # Interactive panel to get inference for the dosage of each molecule
+    
+    output$ui_pred <- renderUI({
+        
+        dataset <- alldat()
+        
+        selectInput("Molecule", "Molecule",
+                    choices = unique(dataset$Molecule)
+        )
         
     })
     
