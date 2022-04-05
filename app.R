@@ -209,14 +209,31 @@ ui <- navbarPage("Statsapp",
                             
                             sidebarLayout(
                                 sidebarPanel(
-                                    radioButtons("plotType", "Plot type",
-                                                 c("Scatter"="p", "Line"="l")
+                                    
+                                    textInput('g1name', label = h3("First group:"), value = "Name"),
+                                    textInput('g2name', label = h3("Second group:"), value = "Name"),
+                                    
+                                    textInput('g1', label = h3("First group .xlxs coordinates"), value = "Coord1:Coord2"),
+                                    textInput('g2', label = h3("Second group .xlxs coordinates"), value = "Coord1:Coord2"),
+                                    
+                                    # Data upload
+                                    
+                                    fileInput('uploadfile2', 'Choose .xlsx file',
+                                              accept = c(".xlsx")
+                                    ),
+                                    
+                                    radioButtons("param", "Data distribution",
+                                                 c("Parametric"="param", 
+                                                   "Non-parametric"="non-param")
                                     )
+                                    
                                 ),
                                 
                                 # Empty panel today
                                 mainPanel(
-                                    
+                                    plotOutput("diy_infplot"),
+                                    hr(),
+                                    verbatimTextOutput("stats_diy")
                                 )
                             )    
                             
@@ -280,6 +297,20 @@ server <- function(input, output) {
         
     })
     
+    # Function reading and returning the imported file for DIY
+    
+    diydat <- reactive({
+        
+        #req(input$upload)
+        
+        inFile <- input$uploadfile2 
+        g1 <- read_xlsx(inFile$datapath, sheet =  1, range = input$g1, col_names = F)
+        
+        g2 <- read_xlsx(inFile$datapath, sheet =  1, range = input$g2, col_names = F)
+        
+        list(g1, g2, c(input$g1name, input$g2name))
+        
+    })
     
     # Function estimating the potential outliers
     # STILL IN PROGRES
@@ -470,6 +501,46 @@ server <- function(input, output) {
             
     })
 
+    
+    # Density plot for DIY inference
+    
+    output$diy_infplot <- renderPlot({
+        
+        groups <- diydat()
+        
+        groups.plot <- data.frame(vals = c(unlist(groups[[1]]), unlist(groups[[2]])), team = c(rep(groups[[3]][1], length(groups[[3]][1])),
+                                                                                       rep(groups[[3]][2], length(groups[[3]][2]))))
+        
+        ggplot(groups.plot, aes(x= vals, col = as.factor(team)))+
+            geom_histogram(aes(y=..density.., fill = as.factor(team)), alpha = 0.5, position = "identity")+
+            geom_density() + 
+            theme_bw()
+        
+        
+    })
+    
+    # Stat tests for DIY inference
+    
+    output$stats_diy <- renderPrint({
+        
+        groups <- diydat()
+        
+        groups.plot <- data.frame(vals = c(unlist(groups[[1]]), unlist(groups[[2]])), team = c(rep(groups[[3]][1], length(groups[[3]][1])),
+                                                                                               rep(groups[[3]][2], length(groups[[3]][2]))))
+        
+        if (input$param == "param") {
+            
+            summary(lm(vals~team, groups.plot))
+            
+        } else {
+            
+            kruskal.test(vals~team, groups.plot)
+            
+        }
+        
+        
+    })
+    
     
     # Results for the power analysis
     
