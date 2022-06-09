@@ -44,13 +44,9 @@ ui <- navbarPage("Statsapp",
             
             # Variables selection
             
-            checkboxGroupInput('variables', label = h3("Variables"),
-                               choices = list("Plate" = "Plate",
-                                              "Molecule" = "Molecule",
-                                              "Dosage" = "Dosage",
-                                              "Row"= "Row",
-                                              "Column" = "Column"),
-                               selected = 1)
+            helpText(em("Note: Import the dataset to exectute the app")),
+            uiOutput("selector"),
+            actionButton("update", "Update Data set", class = "btn-primary")
         ),
         
         # Main panel
@@ -286,15 +282,29 @@ server <- function(input, output) {
     
     # Function reading and returning the imported file
     
-    alldat <- reactive({
-        
-        #req(input$upload)
-        
-        inFile <- input$uploadfile 
-        dat<-read_xlsx(inFile$datapath, sheet =  1)
-        
-        dat
-        
+    alldat <- eventReactive(input$update, {
+      validate(need(input$uploadfile != "", "Please select a data set (.xlsx format only)"))
+      read_xlsx(input$uploadfile$datapath, sheet =  1)
+    }, ignoreNULL = FALSE)
+    
+    # Select a maximum of 2 variables
+    
+    output$selector <- renderUI({
+      selectizeInput("select", "Select columns to display", 
+                     choices = colnames(alldat()), 
+                     multiple = TRUE, options = list(maxItems=2))
+    })
+    
+    # Select only the 'selector' variables of the dataset
+    
+    filtereddata <- eventReactive({
+      input$update
+      alldat()
+    },  {
+      req(alldat())
+      if(is.null(input$select) || input$select == "")
+        alldat() else 
+          alldat()[, colnames(alldat()) %in% input$select]
     })
     
     # Function reading and returning the imported file for DIY
